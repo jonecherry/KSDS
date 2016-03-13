@@ -238,10 +238,10 @@ def do():
                     ProjectsList[num][1]['start']=day
             else :
                 pass
-        rmlist = []
+
         # print G.node
         # print G.node[0]['skill']
-
+        rmlist = []
 
         for team in TeamList:
              #任务知识需求列表
@@ -262,16 +262,21 @@ def do():
                  print('++++++++++++++++++++++TASK IS FINISHED')
                  print team
                  rmlist.append(team)
+                 print '+++++++++++++++刚刚将team加入rmlist'
+                 for r in rmlist:
+                     print r
                  print'----------------------------'
 
 
-        print('+++++++++++++++++++++TEAMLIST')
+        print('+++++++++++++++TEAMLIST')
         for t in TeamList:
             print t
 
         print '+++++++++++++++rmLIST'
         for r in rmlist:
             print r
+        # print rmlist[0]
+        # print ProjectsList[rmlist[0]['task']]
 
         #结算待移除任务列表中项目的时间成本和资金成本,恢复项目负责团队成员的状态为available
         for dtsk in rmlist:
@@ -289,12 +294,16 @@ def do():
             ProjectsList[dtsk['task']][1]['status']='done'
             print 'task %s is done!!!'%(dtsk['task'])
             print 'it costs %s people %s days and %s rmb'%(len(tms),ProjectsList[dtsk['task']][1]['time'],ProjectsList[dtsk['task']][1]['money'])
-#       #计算平均时间成本和资金成本
+
+        # #计算平均时间成本和资金成本
+
         if len(TeamList)==0:
             print '========================================================================'
             print '============= end the simulation and show the results =================='
             print '========================================================================'
             print TeamList
+            # for task in enumerate(TaskList):
+            #     print task
             total_time=0
             total_money=0
             for i in ProjectsList:
