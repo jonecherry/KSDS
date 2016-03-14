@@ -52,7 +52,7 @@ def CreateGraph(data):
         G=nx.random_graphs.barabasi_albert_graph(n, 2, seed)
 
     elif type=='regular':
-        G=nx.random_graphs.random_regular_graph(4, n, seed)
+        G=nx.random_graphs.random_regular_graph(3, n, seed)
 
     return G
 
@@ -142,7 +142,10 @@ def AssignTask(task,network):
             task[1]['status']='processing'
             Team['member'].append(i)
             if len(Team['member']) >= task[1]['limit']:
-                break
+                Team['task']=task[0]
+                Team['speed']=[0,0,0,0,0,0,0,0,0,0]
+                TeamList.append(Team)
+                return TeamList
 
             for pm in Team['member']:
 
@@ -154,14 +157,12 @@ def AssignTask(task,network):
                             Team['member'].append(k)
                             print Team
                             if len(Team['member']) >= task[1]['limit']:
-                                break
-                break
+                                Team['task']=task[0]
+                                Team['speed']=[0,0,0,0,0,0,0,0,0,0]
+                                TeamList.append(Team)
+                                return TeamList
 
 
-    Team['task']=task[0]
-    Team['speed']=[0,0,0,0,0,0,0,0,0,0]
-    TeamList.append(Team)
-    # print TeamList
 
 def do():
     # -*- coding: UTF-8 -*-
@@ -193,13 +194,14 @@ def do():
         #skill是对十项技能的知识需求;limit是项目限定的人员数量;money是资金成本;time是时间成本;status是任务状态;start是开始时间;end是结束时间
 
         # temp=[j,{'skill':skill,'limit':int(math.sqrt(sum(skill))/4)-10,'money':0,'time':0,'status':'undone','start':0,'end':0}]
-        temp=[j,{'skill':skill,'limit':3,'money':0,'time':0,'status':'undone','start':0,'end':0}]
+        temp=[j,{'skill':skill,'limit':7,'money':0,'time':0,'status':'undone','start':0,'end':0}]
         ProjectsList.append(temp)
     print '=================================================================='
     print '                           ProjectsList'
     print '=================================================================='
+    for project in ProjectsList:
+        print project
 
-    print ProjectsList[0]
     print
 
 
@@ -288,7 +290,9 @@ def do():
             ProjectsList[dtsk['task']][1]['money']=teamcost*(float(ProjectsList[dtsk['task']][1]['time'])/30.0)
             ProjectsList[dtsk['task']][1]['status']='done'
             print 'task %s is done!!!'%(dtsk['task'])
+            print  ProjectsList[dtsk['task']]
             print 'it costs %s people %s days and %s rmb'%(len(tms),ProjectsList[dtsk['task']][1]['time'],ProjectsList[dtsk['task']][1]['money'])
+            print '---------------'
 #       #计算平均时间成本和资金成本
         if len(TeamList)==0:
             print '========================================================================'
