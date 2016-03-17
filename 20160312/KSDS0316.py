@@ -120,7 +120,12 @@ def ToBusy(i,person,tasknum):
     person['start'] = day
     print '%s is assigned to project %s in day %s'%(i,tasknum,day)
 
+# 计算个体和项目匹配的技能数量
 def hasSameSkill(person,task):
+    temp = []
+    for t in range(10):
+        temp.append(int(task[1]['skill'][t]/100))
+
     j = 0
     for i in range(10):
         if person['skill'][i] != 0 and task[1]['skill'][i] != 0:
@@ -133,25 +138,44 @@ def hasSameSkill(person,task):
 def AssignTask(task,network):
 
     Team={'member':[]}
-    for i in network.node:
-        #when empoyee and project have the same skill assign him to this project
-        if network.node[i]['status']=='available' and hasSameSkill(network.node[i],task) and len(Team['member'])<task[1]['limit']:
 
-            ToBusy(i,network.node[i],task[0])
-            task[1]['status']='processing'
-            Team['member'].append(i)
-            Team['task'] = task[0]
-            Team['speed'] = [0,0,0,0,0,0,0,0,0,0]
+    #找出匹配度最高的个体
+    theFirst = findTheMatchest(network,task)
 
-            for pm in Team['member']:
-                for node in network.neighbors(pm):
-                    if network.node[node]['status']=='available' and hasSameSkill(network.node[node],task) and len(Team['member'])<task[1]['limit']:
-                        ToBusy(node,network.node[node],task[0])
-                        Team['member'].append(node)
+    ToBusy(theFirst,network.node[theFirst],task[0])
+
+    task[1]['status']='processing'
+    Team['member'].append(theFirst)
+    Team['task'] = task[0]
+    Team['speed'] = [0,0,0,0,0,0,0,0,0,0]
+
+    # 从邻域中找匹配度大于零的个体加入team
+    for node in network.neighbors(theFirst):
+
+        if network.node[node]['status']=='available' and hasSameSkill(network.node[node],task) and len(Team['member'])<task[1]['limit']:
+            ToBusy(node,network.node[node],task[0])
+            Team['member'].append(node)
+
+    TeamList.append(Team)
+    return Team
+
+# 选出匹配度最高成员的id
+def findTheMatchest(network,task):
+    arr = []
+    theBest = 0
+    for i in range(500):
+        if network.node[i]['status'] == 'occupied':
+            continue
+        numOfSameSkill = hasSameSkill(network.node[i],task)
+        if numOfSameSkill>theBest:
+            theBest = numOfSameSkill
+    for j in range(500):
+        if network.node[i]['status'] == 'occupied':
+            continue
+        if theBest == hasSameSkill(network.node[j],task):
+            return j
 
 
-            TeamList.append(Team)
-            return Team
 
 def addMember(task,network):
 
@@ -166,7 +190,7 @@ def addMember(task,network):
                     Team['member'].append(node)
                     return Team
 
-
+#根据taskID找到负责该项目的team
 def searchTeam(taskId):
     for team in TeamList:
         if team['task'] == taskId:
@@ -203,8 +227,7 @@ def do():
 
         #skill是对十项技能的知识需求;limit是项目限定的人员数量;money是资金成本;time是时间成本;status是任务状态;start是开始时间;end是结束时间
 
-        # temp=[j,{'skill':skill,'limit':int(math.sqrt(sum(skill))/4)-10,'money':0,'time':0,'status':'undone','start':0,'end':0}]
-        temp=[j,{'skill':skill,'limit':20,'money':0,'time':0,'status':'undone','start':0,'end':0}]
+        temp=[j,{'skill':skill,'limit':10,'money':0,'time':0,'status':'undone','start':0,'end':0}]
         ProjectsList.append(temp)
     print '=================================================================='
     print '                           ProjectsList'
@@ -220,6 +243,7 @@ def do():
         G.node[i]['salary']=sum(PersonSkill[i])*100
         G.node[i]['task']=[]
         G.node[i]['status']='available'
+        # 对每个个体设定开始时间和结束时间
         G.node[i]['start'] = 0
         G.node[i]['end'] = 0
     print '============================these are developers==============================='
@@ -252,7 +276,7 @@ def do():
 
 
             if project[1]['status'] == 'processing':
-                #每天再不达到人员上限的情况下,每天增加一个member
+                #没达到人员上限的情况下,每天增加一个member
                 addMember(ProjectsList[num],G)
 
 
@@ -351,5 +375,6 @@ def expriment(data):
 if __name__=='__main__':
     conf = ConfigParser.ConfigParser()
     conf.read('conf.cfg')
+    # numdo为反复实验的次数
     numdo = expriment(conf.items('Expriment'))
     print('expriment has run %s times in all'%(numdo))
