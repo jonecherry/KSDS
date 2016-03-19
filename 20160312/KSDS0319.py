@@ -13,23 +13,7 @@ TeamList=[]
 # globals(day)
 
 def CreateGraph(data):
-#parameters:
-#  type:
-#     erdos renyi
-#     watts strogatz
-#     barabasi albert
-#     powerlaw cluster
-#  data:
-#    n : int
-#    The number of nodes
-#    k : int
-#    Each node is joined with its ``k`` nearest neighbors in a ring topology.
-#    p : float
-#    The probability of rewiring each edge
-#    seed : int, optional
-#    Seed for random number generator (default=None)
-#    m : int
-#    Number of edges to attach from a new node to existing nodes
+
     type=data[0][1]
     n=int(data[1][1])
     p=float(data[2][1])
@@ -53,33 +37,6 @@ def CreateGraph(data):
         G=nx.random_graphs.random_regular_graph(3, n, seed)
 
     return G
-
-# def GenSkill(data):
-# #    return Return n lists of sequence from a power law distribution.
-#     n=int(data[0][1])
-#     exponent=float(data[1][1])
-# #     numlist=[]
-#     numlist=utils.powerlaw_sequence(n,exponent)
-#     numlist.sort(reverse=True)
-#
-#     for i,num in enumerate(numlist):
-#
-#         if num<int(num)+0.5:
-#             numlist[i]=int(num)
-#         elif num>=int(num)+0.5:
-#             numlist[i]=int(num)+1
-#     print "1-----------------------------"
-#     print numlist
-#     max=numlist[0]
-#     all=range(max)
-# #    print all
-#     for j,num1 in enumerate(numlist):
-#         a=random.SystemRandom()
-# #         print a
-#         numlist[j]=a.sample(all,num1)
-#     print " 2---------------------------"
-#     print numlist
-#     return numlist
 
 def GenSkillForPerson():
     personsSkillList = []
@@ -120,7 +77,7 @@ def ToBusy(i,person,tasknum):
     person['start'] = day
     print '%s is assigned to project %s in day %s'%(i,tasknum,day)
 
-# 计算个体和项目匹配的技能数量
+# 计算个体和项目匹配的技能数量:只要集合中相同位置都不为零就存在一个技能匹配
 def hasSameSkill(person,task):
     temp = []
     for t in range(10):
@@ -133,7 +90,28 @@ def hasSameSkill(person,task):
 
     return j
 
+# 匹配:当集合相同位置的技能的值相近(差的绝对值小于等于1),就存在一个技能匹配
+def MatchDegree(person,task):
+    temp = []
+    for t in range(10):
+        temp.append(int(task[1]['skill'][t]/100))
 
+    j = 0
+    for i in range(10):
+        if abs(person['skill'][i]- task[1]['skill'][i]) < 1:
+            j +=1
+    return j
+# 匹配:当人的技能值大于项目的技能值,就存在一个技能匹配
+def MatchDegree2(person,task):
+    temp = []
+    for t in range(10):
+        temp.append(int(task[1]['skill'][t]/100))
+
+    j = 0
+    for i in range(10):
+        if person['skill'][i] - task[1]['skill'][i] >= 0:
+            j +=1
+    return j
 
 def AssignTask(task,network):
 
@@ -141,9 +119,8 @@ def AssignTask(task,network):
 
     #找出匹配度最高的个体
     theFirst = findTheMatchest(network,task)
-    # print theFirst
+
     ToBusy(theFirst,network.node[theFirst],task[0])
-    # print network.node
 
     task[1]['status']='processing'
     Team['member'].append(theFirst)
@@ -158,23 +135,26 @@ def AssignTask(task,network):
             Team['member'].append(node)
 
     TeamList.append(Team)
-    print Team
     return Team
 
 # 选出匹配度最高成员的id
 def findTheMatchest(network,task):
     arr = []
     theBest = 0
-    for i in range(50):
+    conf = ConfigParser.ConfigParser()
+    conf.read('conf.cfg')
+
+
+    for i in range(int(conf.items('Graph')[1][1])):
         if network.node[i]['status'] == 'occupied':
             continue
-        numOfSameSkill = hasSameSkill(network.node[i],task)
+        numOfSameSkill = MatchDegree(network.node[i],task)
         if numOfSameSkill>theBest:
             theBest = numOfSameSkill
-    for j in range(50):
+    for j in range(int(conf.items('Graph')[1][1])):
         if network.node[j]['status'] == 'occupied':
             continue
-        if theBest == hasSameSkill(network.node[j],task):
+        if theBest == MatchDegree(network.node[j],task):
             return j
 
 
