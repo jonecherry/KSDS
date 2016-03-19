@@ -3,7 +3,7 @@
 import networkx as nx
 from networkx import utils
 import ConfigParser
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import random
 import math
 import time
