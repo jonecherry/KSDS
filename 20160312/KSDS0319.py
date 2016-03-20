@@ -77,21 +77,22 @@ def ToBusy(i,person,tasknum):
     person['start'] = day
     print '%s is assigned to project %s in day %s'%(i,tasknum,day)
 
-# 计算个体和项目匹配的技能数量:只要集合中相同位置都不为零就存在一个技能匹配
-def hasSameSkill(person,task):
-    temp = []
-    for t in range(10):
-        temp.append(int(task[1]['skill'][t]/100))
+# # 返回匹配的技能数量,规则:只要集合中相同位置都不为零就存在一个技能匹配
+# def MatchDegree(person,task):
+#     temp = []
+#     for t in range(10):
+#         temp.append(int(task[1]['skill'][t]/100))
+#
+#     j = 0
+#     for i in range(10):
+#         if person['skill'][i] != 0 and task[1]['skill'][i] != 0:
+#             j+=1
+#
+#     return j
 
-    j = 0
-    for i in range(10):
-        if person['skill'][i] != 0 and task[1]['skill'][i] != 0:
-            j+=1
 
-    return j
-
-# 匹配:当集合相同位置的技能的值相近(差的绝对值小于等于1),就存在一个技能匹配
-def MatchDegree(person,task):
+# 返回技能匹配的数量,匹配规则:当集合相同位置的技能的值相近(差的绝对值小于等于1),就存在一个技能匹配
+def MatchDegree1(person,task):
     temp = []
     for t in range(10):
         temp.append(int(task[1]['skill'][t]/100))
@@ -101,7 +102,7 @@ def MatchDegree(person,task):
         if abs(person['skill'][i]- task[1]['skill'][i]) < 1:
             j +=1
     return j
-# 匹配:当人的技能值大于项目的技能值,就存在一个技能匹配
+# 返回技能匹配的数量,匹配规则:当人的技能值大于项目的技能值,就存在一个技能匹配
 def MatchDegree2(person,task):
     temp = []
     for t in range(10):
@@ -129,8 +130,7 @@ def AssignTask(task,network):
 
     # 从邻域中找匹配度大于零的个体加入team
     for node in network.neighbors(theFirst):
-
-        if network.node[node]['status']=='available' and hasSameSkill(network.node[node],task) and len(Team['member'])<task[1]['limit']:
+        if network.node[node]['status']=='available' and MatchDegree2(network.node[node],task) and len(Team['member'])<task[1]['limit']:
             ToBusy(node,network.node[node],task[0])
             Team['member'].append(node)
 
@@ -148,13 +148,13 @@ def findTheMatchest(network,task):
     for i in range(int(conf.items('Graph')[1][1])):
         if network.node[i]['status'] == 'occupied':
             continue
-        numOfSameSkill = MatchDegree(network.node[i],task)
+        numOfSameSkill = MatchDegree2(network.node[i],task)
         if numOfSameSkill>theBest:
             theBest = numOfSameSkill
     for j in range(int(conf.items('Graph')[1][1])):
         if network.node[j]['status'] == 'occupied':
             continue
-        if theBest == MatchDegree(network.node[j],task):
+        if theBest == MatchDegree2(network.node[j],task):
             return j
 
 
@@ -167,7 +167,7 @@ def addMember(task,network):
     else:
         for m in Team['member']:
             for node in network.neighbors(m):
-                if network.node[node]['status']=='available' and hasSameSkill(network.node[node],task) and len(Team['member'])<task[1]['limit']:
+                if network.node[node]['status']=='available' and MatchDegree2(network.node[node],task) and len(Team['member'])<task[1]['limit']:
                     ToBusy(node,network.node[node],task[0])
                     Team['member'].append(node)
                     return Team
@@ -190,6 +190,8 @@ def do():
 
     #生成四种网络类型
     G=CreateGraph(conf.items('Graph'))
+
+    # 绘制网络结构图
     # pos = nx.spectral_layout(G)
     # nx.draw(G,pos,node_size = 100)
     # plt.show()
@@ -197,14 +199,12 @@ def do():
     #初始化开发者的知识背景
     PersonSkill = GenSkillForPerson()
 
-
     #初始化开发项目的知识需求
     ProjectsSkill = GenSkillForProject()
 
-    ProjectsList=[]
-
     #对开发者和项目进行初始化
 
+    ProjectsList=[]
     for j,skill in enumerate(ProjectsSkill):
 
         #skill是对十项技能的知识需求;limit是项目限定的人员数量;money是资金成本;time是时间成本;status是任务状态;start是开始时间;end是结束时间
@@ -212,7 +212,7 @@ def do():
         temp=[j,{'skill':skill,'limit':10,'money':0,'time':0,'status':'undone','start':0,'end':0}]
         ProjectsList.append(temp)
     print '=================================================================='
-    print '                           ProjectsList'
+    print '                        these are projects'
     print '=================================================================='
     for project in ProjectsList:
         print project
@@ -229,7 +229,8 @@ def do():
         G.node[i]['start'] = 0
         G.node[i]['end'] = 0
     print '============================these are developers==============================='
-    print G.node
+    for node in G.node:
+        print G.node[node]
     print '============================these are developers==============================='
     print
 
@@ -284,20 +285,17 @@ def do():
                  for skillnum in range(10):
                      ProjectsList[team['task']][1]['skill'][skillnum]-=team['speed'][skillnum]
              else:
-                 print('++++++++++++++++++++++TASK IS FINISHED')
-                 print team
                  rmlist.append(team)
-                 print'----------------------------'
-
-
-        print('+++++++++++++++++++++TEAMLIST')
+        print
+        print('+++++++++++++++++++++TEAMLIST:')
         for t in TeamList:
             print t
-
-        print '+++++++++++++++rmLIST'
+            # print ProjectsList[t['task']]
+        print
+        print '++++++++++++++++++++++rmLIST:'
         for r in rmlist:
             print r
-
+        print
         #结算待移除任务列表中项目的时间成本和资金成本,恢复项目负责团队成员的状态为available
         for dtsk in rmlist:
             count+=1
@@ -316,7 +314,7 @@ def do():
             print 'task %s is done!!!'%(dtsk['task'])
             print  ProjectsList[dtsk['task']]
             print 'it costs %s people %s days and %s rmb'%(len(tms),ProjectsList[dtsk['task']][1]['time'],ProjectsList[dtsk['task']][1]['money'])
-            print '---------------'
+            print '---------------------------------------'
 #       #计算平均时间成本和资金成本
         if len(TeamList)==0:
             print '========================================================================'
