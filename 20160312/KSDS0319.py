@@ -193,14 +193,16 @@ def do():
     #计算网络的平均度
     degrees = nx.degree_histogram(G)
     temp = 0
+    print'----------------度分布------------------'
     print degrees
+    print'----------------每个节点的度-------------'
     print nx.degree(G).values()
+    print
     for i in range(len(degrees)):
         temp += i*degrees[i]
-    print temp
     everageDegree = float(temp/float(conf.items('Graph')[1][1]))
     print '======================================================='
-    print '               网络平均度 %s'%(everageDegree)
+    print '现在处于 %s 网络 ,有 %s 个节点,网络平均度为 %s'%(conf.items('Graph')[0][1],conf.items('Graph')[1][1],everageDegree)
     print '======================================================='
 
     # 绘制网络结构图
