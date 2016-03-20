@@ -3,7 +3,7 @@
 import networkx as nx
 from networkx import utils
 import ConfigParser
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import random
 import math
 import time
@@ -130,9 +130,14 @@ def AssignTask(task,network):
 
     # 从邻域中找匹配度大于零的个体加入team
     for node in network.neighbors(theFirst):
+        print 'the First的neighber'
+        print network.neighbors(theFirst)
+        print '------------------'
         if network.node[node]['status']=='available' and MatchDegree2(network.node[node],task) and len(Team['member'])<int(task[1]['limit']):
             ToBusy(node,network.node[node],task[0])
             Team['member'].append(node)
+            print '在第一次增加了member'
+            print node
 
     TeamList.append(Team)
     return Team
@@ -207,7 +212,7 @@ def do():
 
     # 绘制网络结构图
     # pos = nx.spectral_layout(G)
-    # nx.draw(G,pos,node_size = 100)
+    # nx.draw(G,pos,with_labels=True,node_size = 300)
     # plt.show()
 
     #初始化开发者的知识背景
