@@ -190,6 +190,18 @@ def do():
 
     #生成四种网络类型
     G=CreateGraph(conf.items('Graph'))
+    #计算网络的平均度
+    degrees = nx.degree_histogram(G)
+    temp = 0
+    print degrees
+    print nx.degree(G).values()
+    for i in range(len(degrees)):
+        temp += i*degrees[i]
+    print temp
+    everageDegree = float(temp/float(conf.items('Graph')[1][1]))
+    print '======================================================='
+    print '               网络平均度 %s'%(everageDegree)
+    print '======================================================='
 
     # 绘制网络结构图
     # pos = nx.spectral_layout(G)
