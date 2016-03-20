@@ -205,7 +205,7 @@ def do():
     #对开发者和项目进行初始化
 
     ProjectsList=[]
-   
+
     for j,skill in enumerate(ProjectsSkill):
 
         #skill是对十项技能的知识需求;limit是项目限定的人员数量;money是资金成本;time是时间成本;status是任务状态;start是开始时间;end是结束时间
