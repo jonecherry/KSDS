@@ -3,7 +3,7 @@
 import networkx as nx
 from networkx import utils
 import ConfigParser
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import random
 import math
 import time
@@ -28,7 +28,7 @@ def CreateGraph(data):
         G=nx.random_graphs.erdos_renyi_graph(n, 0.2, seed)
 
     elif type=='ws':
-        G=nx.random_graphs.watts_strogatz_graph(n, 6, 0.3, seed)
+        G=nx.random_graphs.watts_strogatz_graph(n, 6, 0.5, seed)
 
     elif type=='ba':
         G=nx.random_graphs.barabasi_albert_graph(n, 2, seed)
