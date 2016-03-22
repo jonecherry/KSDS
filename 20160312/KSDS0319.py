@@ -88,6 +88,8 @@ def MatchDegree1(person,task):
 def MatchDegree2(person,task):
     j = 0
     for i in range(10):
+        if task[1]['pricipals'][i] == -2 :
+            continue
         if person['skill'][i] - task[1]['skill'][i] >= 0:
             j +=1
     return j
