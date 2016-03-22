@@ -88,7 +88,7 @@ def MatchDegree1(person,task):
 def MatchDegree2(person,task):
     j = 0
     for i in range(10):
-        if task[1]['pricipals'][i] == -2 :
+        if task[1]['principals'][i] == -2 :
             continue
         if person['skill'][i] - task[1]['skill'][i] >= 0:
             j +=1
@@ -105,7 +105,6 @@ def AssignTask(task,network):
     task[1]['status']='processing'
     Team['member'].append(theFirst)
     Team['task'] = task[0]
-    Team['speed'] = [0,0,0,0,0,0,0,0,0,0]
 
     # 从邻域中找匹配度大于等于1的个体加入team
     for node in network.neighbors(theFirst):
@@ -168,9 +167,14 @@ def searchTeam(taskId):
 # param network:网络，task:项目的技能需求，team：团队
 # return task:项目
 def giveTaskToMember(network,task,team):
+
     for i in range(10):
-        if task[1]['principals'][i] == -1:
+        numfit = 0
+        if task[1]['principals'][i] == -1 and memberWaiting(network,team)> numfit:
             person = fit(team,network,i)
+            numfit +=1
+            print 'person'
+            print person
             task[1]['principals'][i] = person
             network.node[person]['status'] = 'working'
 
@@ -182,10 +186,15 @@ def fit(team,network,i):
         if network.node[mem]['skill'][i]>max and network.node[mem]['status'] != 'working':
             max = network.node[mem]['skill'][i]
     for member in team['member']:
-        if network.node[member]['skill'][i] == max and network.node[mem]['status'] != 'working':
+        if network.node[member]['skill'][i] == max and network.node[member]['status'] != 'working':
             return member
-
-
+# 返回team中等待分派任务的成员数量
+def memberWaiting(network,team):
+    i = 0
+    for j in team['member']:
+        if network.node[j]['status'] == 'occupied':
+            i +=1
+    return i
 
 # 释放成员
 # param network:网络，team:团队,ProjectsList:项目列表
@@ -312,6 +321,7 @@ def do():
              workload = ProjectsList[team['task']][1]['workload']
 
              # 在team内部给member分派任务
+             print team
              giveTaskToMember(G,ProjectsList[team['task']],team)
 
              countSkill = 0
