@@ -72,6 +72,7 @@ def GenSkillForProject():
     return projectSkillDemandList
 
 def ToBusy(i,person,tasknum):
+    print person
     person['status']='occupied'
     person['task'].append(tasknum)
     person['start'] = day
@@ -152,7 +153,7 @@ def addMember(task,network):
     else:
         for m in Team['member']:
             for node in network.neighbors(m):
-                if network.node[node]['status']=='available' and MatchDegree2(network.node[node],task) and len(Team['member'])<int(task[1]['limit']):
+                if network.node[node]['status']=='available' and Team['task'] not in network.node[node]['task'] and MatchDegree2(network.node[node],task) and len(Team['member'])<int(task[1]['limit']):
                     ToBusy(node,network.node[node],task[0])
                     Team['member'].append(node)
                     return Team
@@ -167,14 +168,12 @@ def searchTeam(taskId):
 # param network:网络，task:项目的技能需求，team：团队
 # return task:项目
 def giveTaskToMember(network,task,team):
-
+    # temp = random.sample(range(10),10)
     for i in range(10):
         numfit = 0
         if task[1]['principals'][i] == -1 and memberWaiting(network,team)> numfit:
             person = fit(team,network,i)
             numfit +=1
-            print 'person'
-            print person
             task[1]['principals'][i] = person
             network.node[person]['status'] = 'working'
 
@@ -185,9 +184,11 @@ def fit(team,network,i):
     for mem in team['member']:
         if network.node[mem]['skill'][i]>max and network.node[mem]['status'] != 'working':
             max = network.node[mem]['skill'][i]
+    temp = []
     for member in team['member']:
         if network.node[member]['skill'][i] == max and network.node[member]['status'] != 'working':
-            return member
+            temp.append(member)
+            return random.SystemRandom().sample(temp,1)[0]
 # 返回team中等待分派任务的成员数量
 def memberWaiting(network,team):
     i = 0
@@ -203,12 +204,22 @@ def freeMember(network,team,ProjectsList):
     workload = ProjectsList[team['task']][1]['workload']
     principals = ProjectsList[team['task']][1]['principals']
     for i in range(10):
-        if workload[i]< 0 and ProjectsList[team['task']][1]['principals'][i]>= 0:
+        if workload[i]<= 0 and ProjectsList[team['task']][1]['principals'][i]>= 0:
             network.node[principals[i]]['end'] = day
             network.node[principals[i]]['status'] = 'available'
+            ProjectsList[team['task']][1]['money'] += (network.node[principals[i]]['end']-network.node[principals[i]]['start'])*network.node[principals[i]]['salary']/30
+            print '%s is free from task %s'%(ProjectsList[team['task']][1]['principals'][i],team['task'])
             ProjectsList[team['task']][1]['principals'][i] = -2
+
     return ProjectsList[team['task']]
 
+def completion(projects):
+    numfinished = 0
+    for project in projects:
+        if project[1]['status'] == 'done':
+            numfinished += 1
+
+    return numfinished
 
 def do():
     # -*- coding: UTF-8 -*-
@@ -277,6 +288,7 @@ def do():
         G.node[i]['end'] = 0
     print '============================these are developers==============================='
     for node in G.node:
+        print node
         print G.node[node]
     print '============================these are developers==============================='
     print
@@ -293,8 +305,15 @@ def do():
     while 1:
 
         day +=1
+        if day > 50:
+            break
+
+        completionNum = completion(ProjectsList)
+        taskNum = conf.items('Task')[0][1]
+        personNum = conf.items('Person')[0][1]
+        rate = completionNum/float(taskNum)*100
         print '============================================================='
-        print '                          day%s                              '%(day)
+        print 'day%s      %s个人     %s个项目完成了%s个,完成百分之%s            '%(day,personNum,taskNum,completionNum,rate)
         print '============================================================='
 
         #==========================团队组建=======================
@@ -306,6 +325,7 @@ def do():
 
 
             if project[1]['status'] == 'processing':
+
                 #没达到人员上限的情况下,每天增加一个member
                 addMember(ProjectsList[num],G)
 
@@ -321,7 +341,6 @@ def do():
              workload = ProjectsList[team['task']][1]['workload']
 
              # 在team内部给member分派任务
-             print team
              giveTaskToMember(G,ProjectsList[team['task']],team)
 
              countSkill = 0
@@ -342,7 +361,8 @@ def do():
         print('+++++++++++++++++++++TEAMLIST:')
         for t in TeamList:
             print t
-            # print ProjectsList[t['task']]
+            print '对应的项目'
+            print ProjectsList[t['task']]
         print
         print '++++++++++++++++++++++rmLIST:'
         for r in rmlist:
@@ -354,14 +374,14 @@ def do():
             TeamList.remove(dtsk)
             teamcost=0
             tms=dtsk['member']
-            for p in tms:
-                G.node[p]['status']='available'
-                G.node[p]['end'] = day
-                teamcost += (G.node[p]['end']-G.node[p]['start'])*G.node[p]['salary']/30
+            # for p in tms:
+            #     G.node[p]['status']='available'
+            #     G.node[p]['end'] = day
+            #     teamcost += (G.node[p]['end']-G.node[p]['start'])*G.node[p]['salary']/30
 
             ProjectsList[dtsk['task']][1]['end']=day
             ProjectsList[dtsk['task']][1]['time']=ProjectsList[dtsk['task']][1]['end']-ProjectsList[dtsk['task']][1]['start']
-            ProjectsList[dtsk['task']][1]['money']=teamcost
+            # ProjectsList[dtsk['task']][1]['money']=teamcost
             ProjectsList[dtsk['task']][1]['status']='done'
             print 'task %s is done!!!'%(dtsk['task'])
             print  ProjectsList[dtsk['task']]
