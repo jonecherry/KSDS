@@ -77,27 +77,50 @@ def ToBusy(i,person,tasknum):
     person['start'] = day
     print '%s is assigned to project %s in day %s'%(i,tasknum,day)
 
+# # 返回匹配的技能数量,规则:只要集合中相同位置都不为零就存在一个技能匹配
+# def MatchDegree(person,task):
+#     temp = []
+#     for t in range(10):
+#         temp.append(int(task[1]['skill'][t]/100))
+#
+#     j = 0
+#     for i in range(10):
+#         if person['skill'][i] != 0 and task[1]['skill'][i] != 0:
+#             j+=1
+#
+#     return j
+
+
 # 返回技能匹配的数量,匹配规则:当集合相同位置的技能的值相近(差的绝对值小于等于1),就存在一个技能匹配
 def MatchDegree1(person,task):
+    temp = []
+    for t in range(10):
+        temp.append(int(task[1]['skill'][t]/100))
+
     j = 0
     for i in range(10):
         if abs(person['skill'][i]- task[1]['skill'][i]) < 1:
             j +=1
     return j
-# 返回技能匹配的数量,匹配规则:当人的技能值大于等于项目的技能值,就存在一个技能匹配
+# 返回技能匹配的数量,匹配规则:当人的技能值大于项目的技能值,就存在一个技能匹配
 def MatchDegree2(person,task):
+    temp = []
+    for t in range(10):
+        temp.append(int(task[1]['skill'][t]/100))
+
     j = 0
     for i in range(10):
         if person['skill'][i] - task[1]['skill'][i] >= 0:
             j +=1
     return j
-# 团队组建初期，返回Team
+
 def AssignTask(task,network):
 
     Team={'member':[]}
 
-    # 项目第一次匹配个体,只要匹配度大于等于1就可以
-    theFirst = Match(network,task)
+    #找出匹配度最高的个体
+    theFirst = findTheMatchest(network,task)
+
     ToBusy(theFirst,network.node[theFirst],task[0])
 
     task[1]['status']='processing'
@@ -105,21 +128,19 @@ def AssignTask(task,network):
     Team['task'] = task[0]
     Team['speed'] = [0,0,0,0,0,0,0,0,0,0]
 
-    # 从邻域中找匹配度大于等于1的个体加入team
+    # 从邻域中找匹配度大于零的个体加入team
     for node in network.neighbors(theFirst):
+        print 'the First的neighber'
+        print network.neighbors(theFirst)
+        print '------------------'
         if network.node[node]['status']=='available' and MatchDegree2(network.node[node],task) and len(Team['member'])<int(task[1]['limit']):
             ToBusy(node,network.node[node],task[0])
             Team['member'].append(node)
+            print '在第一次增加了member'
+            print node
 
     TeamList.append(Team)
     return Team
-
-# 返回一个匹配度大于1的个体
-def Match(network,task):
-
-    for i in range(int(conf.items('Person')[0][1])):
-        if network.node[i]['status'] == 'available' and MatchDegree2(network.node[i],task)>=1:
-            return i
 
 # 选出匹配度最高成员的id
 def findTheMatchest(network,task):
@@ -142,7 +163,7 @@ def findTheMatchest(network,task):
             return j
 
 
-# 项目执行过程中，继续找匹配度大于等于1的个体
+
 def addMember(task,network):
 
     Team = searchTeam(task[0])
@@ -162,41 +183,6 @@ def searchTeam(taskId):
         if team['task'] == taskId:
             return team
 
-# team内部给成员分派任务
-# param network:网络，task:项目的技能需求，team：团队
-# return task:项目
-def giveTaskToMember(network,task,team):
-    for i in range(10):
-        if task[1]['principals'][i] == -1:
-            person = fit(team,network,i)
-            task[1]['principals'][i] = person
-            network.node[person]['status'] = 'working'
-
-    return task
-# 返回team中负责第i项任务的成员id
-def fit(team,network,i):
-    max = 0
-    for mem in team['member']:
-        if network.node[mem]['skill'][i]>max and network.node[mem]['status'] != 'working':
-            max = network.node[mem]['skill'][i]
-    for member in team['member']:
-        if network.node[member]['skill'][i] == max and network.node[mem]['status'] != 'working':
-            return member
-
-
-
-# 释放成员
-# param network:网络，team:团队,ProjectsList:项目列表
-# return 项目
-def freeMember(network,team,ProjectsList):
-    workload = ProjectsList[team['task']][1]['workload']
-    principals = ProjectsList[team['task']][1]['principals']
-    for i in range(10):
-        if workload[i]< 0 and ProjectsList[team['task']][1]['principals'][i]>= 0:
-            network.node[principals[i]]['end'] = day
-            network.node[principals[i]]['status'] = 'available'
-            ProjectsList[team['task']][1]['principals'][i] = -2
-    return ProjectsList[team['task']]
 
 
 def do():
@@ -237,15 +223,15 @@ def do():
 
     #对开发者和项目进行初始化
 
-
     ProjectsList=[]
 
     for j,skill in enumerate(ProjectsSkill):
+
+        #skill是对十项技能的知识需求;limit是项目限定的人员数量;money是资金成本;time是时间成本;status是任务状态;start是开始时间;end是结束时间
         workload = []
         for skillitem in skill:
             workload.append(skillitem*int(conf.items('Task')[2][1]))
-        principals = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
-        temp=[j,{'skill':skill,'workload':workload,'limit':conf.items('Expriment')[1][1],'money':0,'time':0,'status':'undone','start':0,'end':0,'principals':principals}]
+        temp=[j,{'skill':skill,'workload':workload,'limit':conf.items('Expriment')[1][1],'money':0,'time':0,'status':'undone','start':0,'end':0}]
         ProjectsList.append(temp)
     print '=================================================================='
     print '                        these are projects'
@@ -298,87 +284,83 @@ def do():
                 #没达到人员上限的情况下,每天增加一个member
                 addMember(ProjectsList[num],G)
 
-
-
-        rmlist = []
-        # print G.node
-        # print G.node[0]['skill']
-
-        # 开发ing...  ...
-        for team in TeamList:
-             #项目工作量
-             workload = ProjectsList[team['task']][1]['workload']
-
-             # 在team内部给member分派任务
-             giveTaskToMember(G,ProjectsList[team['task']],team)
-
-             countSkill = 0
-             for skill in workload:
-                 if skill > 0:
-                     countSkill+=1
-             # 释放已经完成任务的成员
-             freeMember(G,team,ProjectsList)
-
-             if countSkill>0:
-                 for i in range(10):
-                     principalId = ProjectsList[team['task']][1]['principals'][i]
-                     if principalId>-1:
-                         ProjectsList[team['task']][1]['workload'][i] -= G.node[principalId]['skill'][i]
-             else:
-                 rmlist.append(team)
-        print
-        print('+++++++++++++++++++++TEAMLIST:')
-        for t in TeamList:
-            print t
-            # print ProjectsList[t['task']]
-        print
-        print '++++++++++++++++++++++rmLIST:'
-        for r in rmlist:
-            print r
-        print
-        #结算待移除任务列表中项目的时间成本和资金成本,恢复项目负责团队成员的状态为available
-        for dtsk in rmlist:
-            count+=1
-            TeamList.remove(dtsk)
-            teamcost=0
-            tms=dtsk['member']
-            for p in tms:
-                G.node[p]['status']='available'
-                G.node[p]['end'] = day
-                teamcost += (G.node[p]['end']-G.node[p]['start'])*G.node[p]['salary']/30
-
-            ProjectsList[dtsk['task']][1]['end']=day
-            ProjectsList[dtsk['task']][1]['time']=ProjectsList[dtsk['task']][1]['end']-ProjectsList[dtsk['task']][1]['start']
-            ProjectsList[dtsk['task']][1]['money']=teamcost
-            ProjectsList[dtsk['task']][1]['status']='done'
-            print 'task %s is done!!!'%(dtsk['task'])
-            print  ProjectsList[dtsk['task']]
-            print 'it costs %s people %s days and %s rmb'%(len(tms),ProjectsList[dtsk['task']][1]['time'],ProjectsList[dtsk['task']][1]['money'])
-            print '---------------------------------------'
-#       #计算平均时间成本和资金成本
-        if len(TeamList)==0:
-            print '========================================================================'
-            print '============= end the simulation and show the results =================='
-            print '========================================================================'
-            print TeamList
-            total_time=0
-            total_money=0
-            for i in ProjectsList:
-                total_money+=i[1]['money']
-                total_time+=i[1]['time']
-            if count==len(ProjectsList):
-                print 'the alltasks are done!!!!! '
-                print 'it takes %s days and %s rmb in totol'%(day,total_money)
-                print 'it takes %s days and %s rmb in average'%(float(total_time)/float(count),total_money/float(count))
-            else:
-                print '%s of %s tasks is done,the rest of tasks cannot find a match.'%(count,len(ProjectsList))
-                print 'it takes %s days and %s rmb in totol'%(day,total_money)
-                print 'it takes %s days and %s rmb in average'%(float(total_time)/float(count),total_money/float(count))
-            csvfile=open('distribution.csv','a')
-            line='%s,%s,%s,%s,%s,%s,%s,%s'%(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())),len(G.node),len(ProjectsList),count,day,total_money,float(total_time)/float(count),total_money/float(count))
-            csvfile.write(line+'\n')
-            csvfile.close()
-            break
+#
+#
+#         rmlist = []
+#         # print G.node
+#         # print G.node[0]['skill']
+#
+#         # 开发ing...  ...
+#         for team in TeamList:
+#              #任务知识需求列表
+#              skilllist = ProjectsList[team['task']][1]['skill']
+#              #计算任务负责团队的作业速度
+#              for mem in team['member']:
+#                  for s in range(10):
+#                     team['speed'][s] = team['speed'][s] + G.node[mem]['skill'][s]
+#              countSkill = 0
+#              for skill in skilllist:
+#                  if skill > 0:
+#                      countSkill+=1
+#
+#              if countSkill>0:
+#                  for skillnum in range(10):
+#                      ProjectsList[team['task']][1]['skill'][skillnum]-=team['speed'][skillnum]
+#              else:
+#                  rmlist.append(team)
+#         print
+#         print('+++++++++++++++++++++TEAMLIST:')
+#         for t in TeamList:
+#             print t
+#             # print ProjectsList[t['task']]
+#         print
+#         print '++++++++++++++++++++++rmLIST:'
+#         for r in rmlist:
+#             print r
+#         print
+#         #结算待移除任务列表中项目的时间成本和资金成本,恢复项目负责团队成员的状态为available
+#         for dtsk in rmlist:
+#             count+=1
+#             TeamList.remove(dtsk)
+#             teamcost=0
+#             tms=dtsk['member']
+#             for p in tms:
+#                 G.node[p]['status']='available'
+#                 G.node[p]['end'] = day
+#                 teamcost += (G.node[p]['end']-G.node[p]['start'])*G.node[p]['salary']/30
+#
+#             ProjectsList[dtsk['task']][1]['end']=day
+#             ProjectsList[dtsk['task']][1]['time']=ProjectsList[dtsk['task']][1]['end']-ProjectsList[dtsk['task']][1]['start']
+#             ProjectsList[dtsk['task']][1]['money']=teamcost
+#             ProjectsList[dtsk['task']][1]['status']='done'
+#             print 'task %s is done!!!'%(dtsk['task'])
+#             print  ProjectsList[dtsk['task']]
+#             print 'it costs %s people %s days and %s rmb'%(len(tms),ProjectsList[dtsk['task']][1]['time'],ProjectsList[dtsk['task']][1]['money'])
+#             print '---------------------------------------'
+# #       #计算平均时间成本和资金成本
+#         if len(TeamList)==0:
+#             print '========================================================================'
+#             print '============= end the simulation and show the results =================='
+#             print '========================================================================'
+#             print TeamList
+#             total_time=0
+#             total_money=0
+#             for i in ProjectsList:
+#                 total_money+=i[1]['money']
+#                 total_time+=i[1]['time']
+#             if count==len(ProjectsList):
+#                 print 'the alltasks are done!!!!! '
+#                 print 'it takes %s days and %s rmb in totol'%(day,total_money)
+#                 print 'it takes %s days and %s rmb in average'%(float(total_time)/float(count),total_money/float(count))
+#             else:
+#                 print '%s of %s tasks is done,the rest of tasks cannot find a match.'%(count,len(ProjectsList))
+#                 print 'it takes %s days and %s rmb in totol'%(day,total_money)
+#                 print 'it takes %s days and %s rmb in average'%(float(total_time)/float(count),total_money/float(count))
+#             csvfile=open('distribution.csv','a')
+#             line='%s,%s,%s,%s,%s,%s,%s,%s'%(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())),len(G.node),len(ProjectsList),count,day,total_money,float(total_time)/float(count),total_money/float(count))
+#             csvfile.write(line+'\n')
+#             csvfile.close()
+#             break
 
 def expriment(data):
     numOfExpri = 0
