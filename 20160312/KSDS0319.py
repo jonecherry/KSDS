@@ -173,12 +173,36 @@ def giveTaskToMember(network,task,team):
 
     for i in range(10):
         numfit = 0
-        if task[1]['principals'][i] == -1 and memberWaiting(network,team)> numfit and fit(team,network,i) != 'notfound':
+        if task[1]['principals'][i][0] == -1 and memberWaiting(network,team)> numfit and fit(team,network,i) != 'notfound':
             numfit +=1
-            task[1]['principals'][i] = fit(team,network,i)
+            task[1]['principals'][i][0] = fit(team,network,i)
             network.node[fit(team,network,i)]['status'] = 'working'
 
+    taskUnfinish = taskUnfinished(task)
+    if len(team['member'])>10 and  isAllAssigned(task):
+       for j in range(len(team['member'])):
+           if network.node[j] == 'occupied':
+               randomNum = random.SystemRandom().sample(taskUnfinish,1)[0]
+               fit(team,network,randomNum)
+
+
     return task
+# 返回未完成子项目列表
+def taskUnfinished(task):
+    temp = []
+    for i in range(10):
+        if task[1]['principals'][i][0] == -2:
+            continue
+        else:
+            temp.append(i)
+    return temp
+
+# 判断项目中的子项目是否全部有了负责人
+def isAllAssigned(task):
+    for i in range(10):
+        if task[1]['principals'][i][0] == -1:
+            return  False
+    return True
 # 返回team中负责第i项任务的成员id
 def fit(team,network,i):
     max = 0
@@ -209,12 +233,14 @@ def resetMember(network,team,ProjectsList):
     workload = ProjectsList[team['task']][1]['workload']
     principals = ProjectsList[team['task']][1]['principals']
     for i in range(10):
-        if workload[i]<= 0 and ProjectsList[team['task']][1]['principals'][i]>= 0:
-            network.node[principals[i]]['end'] = day
-            network.node[principals[i]]['status'] = 'occupied'
-            # ProjectsList[team['task']][1]['money'] += (network.node[principals[i]]['end']-network.node[principals[i]]['start'])*network.node[principals[i]]['salary']/30
-            print '%s is reseted in task %s'%(ProjectsList[team['task']][1]['principals'][i],team['task'])
-            ProjectsList[team['task']][1]['principals'][i] = -2
+        if workload[i]<= 0 and ProjectsList[team['task']][1]['principals'][i][0]>= 0:
+            for principal in ProjectsList[team['task']][1]['principals'][i]:
+
+                network.node[principal]['end'] = day
+                network.node[principal]['status'] = 'occupied'
+                # ProjectsList[team['task']][1]['money'] += (network.node[principals[i]]['end']-network.node[principals[i]]['start'])*network.node[principals[i]]['salary']/30
+                print '%s is reseted to stand by in task %s'%(principal,team['task'])
+                ProjectsList[team['task']][1]['principals'][i] = [-2]
 
     return ProjectsList[team['task']]
 
@@ -271,7 +297,7 @@ def do():
         workload = []
         for skillitem in skill:
             workload.append(skillitem*int(conf.items('Task')[2][1]))
-        principals = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
+        principals = [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]]
         temp=[j,{'skill':skill,'workload':workload,'limit':conf.items('Expriment')[1][1],'money':0,'time':0,'status':'undone','start':0,'end':0,'principals':principals}]
         ProjectsList.append(temp)
     print '=================================================================='
@@ -310,8 +336,8 @@ def do():
     while 1:
 
         day +=1
-        if day > 100:
-            break
+        # if day > 100:
+        #     break
 
         completionNum = completion(ProjectsList)
         taskNum = conf.items('Task')[0][1]
@@ -357,9 +383,13 @@ def do():
 
              if countSkill>0:
                  for i in range(10):
-                     principalId = ProjectsList[team['task']][1]['principals'][i]
-                     if principalId>-1:
-                         ProjectsList[team['task']][1]['workload'][i] -= G.node[principalId]['skill'][i]
+                     principalIds  = ProjectsList[team['task']][1]['principals'][i]
+                     print ProjectsList[team['task']]
+                     print '00000000'
+                     print principalIds
+                     if principalIds[0] > -1:
+                         for id in principalIds:
+                            ProjectsList[team['task']][1]['workload'][i] -= G.node[id]['skill'][i]
              else:
                  rmlist.append(team)
         print
