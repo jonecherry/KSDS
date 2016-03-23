@@ -376,10 +376,10 @@ def do():
                     if G.node[nb]['status'] == 'available'  and t['task'] not in G.node[nb]['task']:
                         print '%s,%s'%(nb,G.node[nb])
             print
-            print '项目%s members的邻域'%(t['task'])
-            for m in t['member']:
-                for nb in G.neighbors(m):
-                    print '%s,%s'%(nb,G.node[nb])
+            # print '项目%s members的邻域'%(t['task'])
+            # for m in t['member']:
+            #     for nb in G.neighbors(m):
+            #         print '%s,%s'%(nb,G.node[nb])
         print
 
         print '++++++++++++++++++++++rmLIST:'
