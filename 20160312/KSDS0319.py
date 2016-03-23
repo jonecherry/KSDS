@@ -170,7 +170,7 @@ def searchTeam(taskId):
 # param network:网络，task:项目的技能需求，team：团队
 # return task:项目
 def giveTaskToMember(network,task,team):
-    # temp = random.sample(range(10),10)
+
     for i in range(10):
         numfit = 0
         if task[1]['principals'][i] == -1 and memberWaiting(network,team)> numfit and fit(team,network,i) != 'notfound':
@@ -183,14 +183,14 @@ def giveTaskToMember(network,task,team):
 def fit(team,network,i):
     max = 0
     for mem in team['member']:
-        if network.node[mem]['skill'][i]>max and network.node[mem]['status'] != 'working':
+        if network.node[mem]['skill'][i]>max and network.node[mem]['status'] == 'occupied':
             max = network.node[mem]['skill'][i]
     if max == 0:
         return 'notfound'
     else:
         temp = []
         for member in team['member']:
-            if network.node[member]['skill'][i] == max and network.node[member]['status'] != 'working':
+            if network.node[member]['skill'][i] == max and network.node[member]['status'] == 'occupied':
                 temp.append(member)
 
         return random.SystemRandom().sample(temp,1)[0]
@@ -205,15 +205,15 @@ def memberWaiting(network,team):
 # 释放成员
 # param network:网络，team:团队,ProjectsList:项目列表
 # return 项目
-def freeMember(network,team,ProjectsList):
+def resetMember(network,team,ProjectsList):
     workload = ProjectsList[team['task']][1]['workload']
     principals = ProjectsList[team['task']][1]['principals']
     for i in range(10):
         if workload[i]<= 0 and ProjectsList[team['task']][1]['principals'][i]>= 0:
             network.node[principals[i]]['end'] = day
-            network.node[principals[i]]['status'] = 'available'
-            ProjectsList[team['task']][1]['money'] += (network.node[principals[i]]['end']-network.node[principals[i]]['start'])*network.node[principals[i]]['salary']/30
-            print '%s is free from task %s'%(ProjectsList[team['task']][1]['principals'][i],team['task'])
+            network.node[principals[i]]['status'] = 'occupied'
+            # ProjectsList[team['task']][1]['money'] += (network.node[principals[i]]['end']-network.node[principals[i]]['start'])*network.node[principals[i]]['salary']/30
+            print '%s is reseted in task %s'%(ProjectsList[team['task']][1]['principals'][i],team['task'])
             ProjectsList[team['task']][1]['principals'][i] = -2
 
     return ProjectsList[team['task']]
@@ -352,8 +352,8 @@ def do():
              for skill in workload:
                  if skill > 0:
                      countSkill+=1
-             # 释放已经完成任务的成员
-             freeMember(G,team,ProjectsList)
+             # 重置完成任务的成员
+             resetMember(G,team,ProjectsList)
 
              if countSkill>0:
                  for i in range(10):
@@ -365,8 +365,9 @@ def do():
         print
         print('+++++++++++++++++++++TEAMLIST:')
         for t in TeamList:
+            print '团队'
             print t
-            print '对应的项目'
+            print '项目'
             print ProjectsList[t['task']]
             # 获取符合条件的潜在成员
             print '项目%s 的潜在成员'%(t['task'])
@@ -374,13 +375,12 @@ def do():
                 for nb in G.neighbors(m):
                     if G.node[nb]['status'] == 'available'  and t['task'] not in G.node[nb]['task']:
                         print '%s,%s'%(nb,G.node[nb])
-            print '---------分割线----------------'
-            print 'member的邻域'
+            print
+            print '项目%s members的邻域'%(t['task'])
             for m in t['member']:
                 for nb in G.neighbors(m):
                     print '%s,%s'%(nb,G.node[nb])
         print
-        # 打印所有的为available状态的个体
 
         print '++++++++++++++++++++++rmLIST:'
         for r in rmlist:
@@ -392,25 +392,32 @@ def do():
             TeamList.remove(dtsk)
             teamcost=0
             tms=dtsk['member']
-            # for p in tms:
-            #     G.node[p]['status']='available'
-            #     G.node[p]['end'] = day
-            #     teamcost += (G.node[p]['end']-G.node[p]['start'])*G.node[p]['salary']/30
+            for tm in tms:
+                G.node[tm]['end'] = day
+                G.node[tm]['status'] = 'available'
+                teamcost += (G.node[tm]['end']-G.node[tm]['start'])*G.node[tm]['salary']/30
+
 
             ProjectsList[dtsk['task']][1]['end']=day
             ProjectsList[dtsk['task']][1]['time']=ProjectsList[dtsk['task']][1]['end']-ProjectsList[dtsk['task']][1]['start']
-            # ProjectsList[dtsk['task']][1]['money']=teamcost
+            ProjectsList[dtsk['task']][1]['money']=teamcost
             ProjectsList[dtsk['task']][1]['status']='done'
             print 'task %s is done!!!'%(dtsk['task'])
-            print  ProjectsList[dtsk['task']]
             print 'it costs %s people %s days and %s rmb'%(len(tms),ProjectsList[dtsk['task']][1]['time'],ProjectsList[dtsk['task']][1]['money'])
+            print  ProjectsList[dtsk['task']]
             print
 #       #计算平均时间成本和资金成本
         if len(TeamList)==0:
-            print '========================================================================'
-            print '============= end the simulation and show the results =================='
-            print '========================================================================'
-            print TeamList
+            completionNum = completion(ProjectsList)
+            taskNum = conf.items('Task')[0][1]
+            personNum = conf.items('Person')[0][1]
+            rate = completionNum/float(taskNum)*100
+            print '============================================================='
+            print '现在处于 %s 网络 ,有 %s 个节点,网络平均度为 %s'%(conf.items('Graph')[0][1],conf.items('Graph')[1][1],everageDegree)
+
+            # print 'day%s      %s个人     %s个项目完成了%s个,完成百分之%s            '%(day,personNum,taskNum,completionNum,rate)
+            print '========== end the simulation and show the results ==========='
+
             total_time=0
             total_money=0
             for i in ProjectsList:
