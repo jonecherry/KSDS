@@ -79,12 +79,12 @@ def ToBusy(i,person,tasknum):
     print '%s is assigned to project %s in day %s'%(i,tasknum,day)
 
 # 返回技能匹配的数量,匹配规则:当集合相同位置的技能的值相近(差的绝对值小于等于1),就存在一个技能匹配
-def MatchDegree1(person,task):
-    j = 0
-    for i in range(10):
-        if abs(person['skill'][i]- task[1]['skill'][i]) < 1:
-            j +=1
-    return j
+# def MatchDegree1(person,task):
+#     j = 0
+#     for i in range(10):
+#         if abs(person['skill'][i]- task[1]['skill'][i]) < 1:
+#             j +=1
+#     return j
 # 返回技能匹配的数量,匹配规则:当人的技能值大于等于项目的技能值,就存在一个技能匹配
 def MatchDegree2(person,task):
     j = 0
@@ -100,29 +100,31 @@ def AssignTask(task,network):
     Team={'member':[]}
 
     # 项目第一次匹配个体,只要匹配度大于等于1就可以
-    theFirst = Match(network,task)
-    ToBusy(theFirst,network.node[theFirst],task[0])
+    if Match(network,task) != 'notfound':
+        theFirst = Match(network,task)
+        ToBusy(theFirst,network.node[theFirst],task[0])
 
-    task[1]['status']='processing'
-    Team['member'].append(theFirst)
-    Team['task'] = task[0]
+        task[1]['status']='processing'
+        Team['member'].append(theFirst)
+        Team['task'] = task[0]
 
-    # 从邻域中找匹配度大于等于1的个体加入team
-    for node in network.neighbors(theFirst):
-        if network.node[node]['status']=='available' and MatchDegree2(network.node[node],task) and len(Team['member'])<int(task[1]['limit']):
-            ToBusy(node,network.node[node],task[0])
-            Team['member'].append(node)
+        # 从邻域中找匹配度大于等于1的个体加入team
+        for node in network.neighbors(theFirst):
+            if network.node[node]['status']=='available' and MatchDegree2(network.node[node],task) and len(Team['member'])<int(task[1]['limit']):
+                ToBusy(node,network.node[node],task[0])
+                Team['member'].append(node)
 
-    TeamList.append(Team)
-    return Team
-
+        TeamList.append(Team)
+        return Team
+    else:
+        return 'waiting'
 # 返回一个匹配度大于1的个体
 def Match(network,task):
 
     for i in range(int(conf.items('Person')[0][1])):
         if network.node[i]['status'] == 'available' and MatchDegree2(network.node[i],task)>=1:
             return i
-
+    return 'notfound'
 # 选出匹配度最高成员的id
 def findTheMatchest(network,task):
     arr = []
@@ -171,11 +173,10 @@ def giveTaskToMember(network,task,team):
     # temp = random.sample(range(10),10)
     for i in range(10):
         numfit = 0
-        if task[1]['principals'][i] == -1 and memberWaiting(network,team)> numfit:
-            person = fit(team,network,i)
+        if task[1]['principals'][i] == -1 and memberWaiting(network,team)> numfit and fit(team,network,i) != 'notfound':
             numfit +=1
-            task[1]['principals'][i] = person
-            network.node[person]['status'] = 'working'
+            task[1]['principals'][i] = fit(team,network,i)
+            network.node[fit(team,network,i)]['status'] = 'working'
 
     return task
 # 返回team中负责第i项任务的成员id
@@ -184,11 +185,15 @@ def fit(team,network,i):
     for mem in team['member']:
         if network.node[mem]['skill'][i]>max and network.node[mem]['status'] != 'working':
             max = network.node[mem]['skill'][i]
-    temp = []
-    for member in team['member']:
-        if network.node[member]['skill'][i] == max and network.node[member]['status'] != 'working':
-            temp.append(member)
-            return random.SystemRandom().sample(temp,1)[0]
+    if max == 0:
+        return 'notfound'
+    else:
+        temp = []
+        for member in team['member']:
+            if network.node[member]['skill'][i] == max and network.node[member]['status'] != 'working':
+                temp.append(member)
+
+        return random.SystemRandom().sample(temp,1)[0]
 # 返回team中等待分派任务的成员数量
 def memberWaiting(network,team):
     i = 0
@@ -305,7 +310,7 @@ def do():
     while 1:
 
         day +=1
-        if day > 50:
+        if day > 100:
             break
 
         completionNum = completion(ProjectsList)
@@ -363,7 +368,20 @@ def do():
             print t
             print '对应的项目'
             print ProjectsList[t['task']]
+            # 获取符合条件的潜在成员
+            print '项目%s 的潜在成员'%(t['task'])
+            for m in t['member']:
+                for nb in G.neighbors(m):
+                    if G.node[nb]['status'] == 'available'  and t['task'] not in G.node[nb]['task']:
+                        print '%s,%s'%(nb,G.node[nb])
+            print '---------分割线----------------'
+            print 'member的邻域'
+            for m in t['member']:
+                for nb in G.neighbors(m):
+                    print '%s,%s'%(nb,G.node[nb])
         print
+        # 打印所有的为available状态的个体
+
         print '++++++++++++++++++++++rmLIST:'
         for r in rmlist:
             print r
@@ -386,7 +404,7 @@ def do():
             print 'task %s is done!!!'%(dtsk['task'])
             print  ProjectsList[dtsk['task']]
             print 'it costs %s people %s days and %s rmb'%(len(tms),ProjectsList[dtsk['task']][1]['time'],ProjectsList[dtsk['task']][1]['money'])
-            print '---------------------------------------'
+            print
 #       #计算平均时间成本和资金成本
         if len(TeamList)==0:
             print '========================================================================'
@@ -399,7 +417,7 @@ def do():
                 total_money+=i[1]['money']
                 total_time+=i[1]['time']
             if count==len(ProjectsList):
-                print 'the alltasks are done!!!!! '
+                print 'all tasks are done!!!!! '
                 print 'it takes %s days and %s rmb in totol'%(day,total_money)
                 print 'it takes %s days and %s rmb in average'%(float(total_time)/float(count),total_money/float(count))
             else:
