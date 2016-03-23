@@ -179,13 +179,12 @@ def giveTaskToMember(network,task,team):
             network.node[fit(team,network,i)]['status'] = 'working'
 
     taskUnfinish = taskUnfinished(task)
-    if len(team['member'])>10 and  isAllAssigned(task):
+    if len(team['member'])>= 10 and isAllAssigned(task):
        for j in range(len(team['member'])):
-           if network.node[j] == 'occupied':
-               randomNum = random.SystemRandom().sample(taskUnfinish,1)[0]
-               fit(team,network,randomNum)
-
-
+           randomNum = random.SystemRandom().sample(taskUnfinish,1)[0]
+           if network.node[j]['status'] == 'occupied':
+               task[1]['principals'][randomNum].append(j)
+               network.node[j]['status'] = 'working'
     return task
 # 返回未完成子项目列表
 def taskUnfinished(task):
@@ -384,9 +383,6 @@ def do():
              if countSkill>0:
                  for i in range(10):
                      principalIds  = ProjectsList[team['task']][1]['principals'][i]
-                     print ProjectsList[team['task']]
-                     print '00000000'
-                     print principalIds
                      if principalIds[0] > -1:
                          for id in principalIds:
                             ProjectsList[team['task']][1]['workload'][i] -= G.node[id]['skill'][i]
@@ -400,16 +396,16 @@ def do():
             print '项目'
             print ProjectsList[t['task']]
             # 获取符合条件的潜在成员
-            print '项目%s 的潜在成员'%(t['task'])
-            for m in t['member']:
-                for nb in G.neighbors(m):
-                    if G.node[nb]['status'] == 'available'  and t['task'] not in G.node[nb]['task']:
-                        print '%s,%s'%(nb,G.node[nb])
+            # print '项目%s 的潜在成员'%(t['task'])
+            # for m in t['member']:
+            #     for nb in G.neighbors(m):
+            #         if G.node[nb]['status'] == 'available'  and t['task'] not in G.node[nb]['task']:
+            #             print '%s,%s'%(nb,G.node[nb])
             print
-            print '项目%s members的邻域'%(t['task'])
-            for m in t['member']:
-                for nb in G.neighbors(m):
-                    print '%s,%s'%(nb,G.node[nb])
+            # print '项目%s members的邻域'%(t['task'])
+            # for m in t['member']:
+            #     for nb in G.neighbors(m):
+            #         print '%s,%s'%(nb,G.node[nb])
         print
 
         print '++++++++++++++++++++++rmLIST:'
