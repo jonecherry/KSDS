@@ -10,7 +10,9 @@ import time
 import csv
 
 TeamList=[]
-# globals(day)
+conf1 = ConfigParser.ConfigParser()
+conf1.read('conf.cfg')
+switchbutton = conf1.items('Expriment')[2][1]
 
 def CreateGraph(data):
 
@@ -49,10 +51,11 @@ def GenSkillForPerson():
             randomNum = a.sample(distributionRange,1)[0]
             personSkill.append(randomNum)
         personsSkillList.append(personSkill)
-    print('========================为开发者们设定知识背景===========================')
-    print(personsSkillList[0])
-    print('========================为开发者们设定知识背景===========================')
-    print
+    if switchbutton == 1:
+        print('========================为开发者们设定知识背景===========================')
+        print(personsSkillList[0])
+        print('========================为开发者们设定知识背景===========================')
+        print
     return personsSkillList
 
 def GenSkillForProject():
@@ -65,18 +68,20 @@ def GenSkillForProject():
             randomNum = a.sample(numList,1)[0]
             projectSkill.append(randomNum)
         projectSkillDemandList.append(projectSkill)
-    print('=========================为项目设定知识需求===============================')
-    print(projectSkillDemandList[0])
-    print('=========================为项目设定知识需求===============================')
-    print
+    if switchbutton == 1:
+        print('=========================为项目设定知识需求===============================')
+        print(projectSkillDemandList[0])
+        print('=========================为项目设定知识需求===============================')
+        print
     return projectSkillDemandList
 
 def ToBusy(i,person,tasknum):
     person['status']='occupied'
     person['task'].append(tasknum)
     person['start'] = day
-    print '%s is assigned to project %s in day %s'%(i,tasknum,day)
-    print person
+    if switchbutton == 1:
+        print '%s is assigned to project %s in day %s'%(i,tasknum,day)
+
 
 # 返回技能匹配的数量,匹配规则:当集合相同位置的技能的值相近(差的绝对值小于等于1),就存在一个技能匹配
 # def MatchDegree1(person,task):
@@ -179,7 +184,8 @@ def giveTaskToMember(network,task,team):
                 numfit +=1
                 task[1]['principals'][i][0] = theFit
                 network.node[theFit]['status'] = 'working'
-                print '项目 %s 中,给 个体 %s : %s 分派了任务'%(task[0],theFit,network.node[theFit])
+                if switchbutton == 1:
+                    print '项目 %s 中,给 个体 %s : %s 分派了任务'%(task[0],theFit,network.node[theFit])
 
 
     taskUnfinish = taskUnfinished(task)
@@ -189,7 +195,9 @@ def giveTaskToMember(network,task,team):
            if network.node[j]['status'] == 'occupied':
                task[1]['principals'][randomNum].append(j)
                network.node[j]['status'] = 'working'
-               print '项目 %s 中,给 个体 %s : %s 分派了任务'%(task[0],j,network.node[j])
+               if switchbutton == 1:
+                   print '项目 %s 中,给 个体 %s : %s 分派了任务'%(task[0],j,network.node[j])
+
     return task
 # 返回未完成子项目列表
 def taskUnfinished(task):
@@ -243,7 +251,8 @@ def resetMember(network,team,ProjectsList):
                 network.node[principal]['end'] = day
                 network.node[principal]['status'] = 'occupied'
                 # ProjectsList[team['task']][1]['money'] += (network.node[principals[i]]['end']-network.node[principals[i]]['start'])*network.node[principals[i]]['salary']/30
-                print '%s is reseted to stand by in task %s'%(principal,team['task'])
+                if switchbutton == 1:
+                    print '%s is reseted to stand by in task %s'%(principal,team['task'])
                 ProjectsList[team['task']][1]['principals'][i] = [-2]
 
     return ProjectsList[team['task']]
@@ -269,11 +278,12 @@ def do():
     #计算网络的平均度
     degrees = nx.degree_histogram(G)
     temp = 0
-    print'----------------度分布------------------'
-    print degrees
-    print'----------------每个节点的度-------------'
-    print nx.degree(G).values()
-    print
+    if switchbutton == 1:
+        print'----------------度分布------------------'
+        print degrees
+        print'----------------每个节点的度-------------'
+        print nx.degree(G).values()
+        print
     for i in range(len(degrees)):
         temp += i*degrees[i]
     everageDegree = float(temp/float(conf.items('Graph')[1][1]))
@@ -304,13 +314,14 @@ def do():
         principals = [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]]
         temp=[j,{'skill':skill,'workload':workload,'limit':conf.items('Expriment')[1][1],'money':0,'time':0,'status':'undone','start':0,'end':0,'principals':principals}]
         ProjectsList.append(temp)
-    print '=================================================================='
-    print '                        these are projects'
-    print '=================================================================='
-    for project in ProjectsList:
-        print project
+    if switchbutton == 1:
+        print '=================================================================='
+        print '                        these are projects'
+        print '=================================================================='
+        for project in ProjectsList:
+            print project
 
-    print
+        print
 
 
     for i,node in enumerate(G.node):
@@ -321,12 +332,13 @@ def do():
         # 对每个个体设定开始时间和结束时间
         G.node[i]['start'] = 0
         G.node[i]['end'] = 0
-    # print '============================these are developers==============================='
-    # for node in G.node:
-    #     print node
-    #     print G.node[node]
-    # print '============================these are developers==============================='
-    # print
+    if switchbutton == 1:
+        print '============================these are developers==============================='
+        for node in G.node:
+            print node
+            print G.node[node]
+        print '============================these are developers==============================='
+        print
 
 
     #=======================================================================
@@ -394,29 +406,30 @@ def do():
              else:
                  rmlist.append(team)
         print
-        print('+++++++++++++++++++++TEAMLIST:')
-        for t in TeamList:
-            print '团队'
-            print t
-            print '项目'
-            print ProjectsList[t['task']]
-            # 获取符合条件的潜在成员
-            # print '项目%s 的潜在成员'%(t['task'])
-            # for m in t['member']:
-            #     for nb in G.neighbors(m):
-            #         if G.node[nb]['status'] == 'available'  and t['task'] not in G.node[nb]['task']:
-            #             print '%s,%s'%(nb,G.node[nb])
+        if switchbutton == 1:
+            print('+++++++++++++++++++++TEAMLIST:')
+            for t in TeamList:
+                print '团队'
+                print t
+                print '项目'
+                print ProjectsList[t['task']]
+                # 获取符合条件的潜在成员
+                print '项目%s 的潜在成员'%(t['task'])
+                for m in t['member']:
+                    for nb in G.neighbors(m):
+                        if G.node[nb]['status'] == 'available'  and t['task'] not in G.node[nb]['task']:
+                            print '%s,%s'%(nb,G.node[nb])
+                print
+                # print '项目%s members的邻域'%(t['task'])
+                # for m in t['member']:
+                #     for nb in G.neighbors(m):
+                #         print '%s,%s'%(nb,G.node[nb])
             print
-            # print '项目%s members的邻域'%(t['task'])
-            # for m in t['member']:
-            #     for nb in G.neighbors(m):
-            #         print '%s,%s'%(nb,G.node[nb])
-        print
 
-        print '++++++++++++++++++++++rmLIST:'
-        for r in rmlist:
-            print r
-        print
+            print '++++++++++++++++++++++rmLIST:'
+            for r in rmlist:
+                print r
+            print
         #结算待移除任务列表中项目的时间成本和资金成本,恢复项目负责团队成员的状态为available
         for dtsk in rmlist:
             count+=1
@@ -435,7 +448,8 @@ def do():
             ProjectsList[dtsk['task']][1]['status']='done'
             print 'task %s is done!!!'%(dtsk['task'])
             print 'it costs %s people %s days and %s rmb'%(len(tms),ProjectsList[dtsk['task']][1]['time'],ProjectsList[dtsk['task']][1]['money'])
-            print  ProjectsList[dtsk['task']]
+            if switchbutton == 1:
+                print  ProjectsList[dtsk['task']]
             print
 #       #计算平均时间成本和资金成本
         if len(TeamList)==0:
@@ -446,7 +460,7 @@ def do():
             print '============================================================='
             print '现在处于 %s 网络 ,有 %s 个节点,网络平均度为 %s'%(conf.items('Graph')[0][1],conf.items('Graph')[1][1],everageDegree)
 
-            # print 'day%s      %s个人     %s个项目完成了%s个,完成百分之%s            '%(day,personNum,taskNum,completionNum,rate)
+            print 'day%s      %s个人     %s个项目完成了%s个,完成百分之%s            '%(day,personNum,taskNum,completionNum,rate)
             print '========== end the simulation and show the results ==========='
 
             total_time=0
