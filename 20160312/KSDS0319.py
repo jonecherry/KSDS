@@ -12,7 +12,7 @@ import csv
 TeamList=[]
 conf1 = ConfigParser.ConfigParser()
 conf1.read('conf.cfg')
-switchbutton = conf1.items('Expriment')[2][1]
+switchbutton = int(conf1.items('Expriment')[2][1])
 
 def CreateGraph(data):
 
@@ -90,6 +90,7 @@ def ToBusy(i,person,tasknum):
 #         if abs(person['skill'][i]- task[1]['skill'][i]) < 1:
 #             j +=1
 #     return j
+
 # 返回技能匹配的数量,匹配规则:当人的技能值大于等于项目的技能值,就存在一个技能匹配
 def MatchDegree2(person,task):
     j = 0
