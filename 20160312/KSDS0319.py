@@ -72,11 +72,11 @@ def GenSkillForProject():
     return projectSkillDemandList
 
 def ToBusy(i,person,tasknum):
-    print person
     person['status']='occupied'
     person['task'].append(tasknum)
     person['start'] = day
     print '%s is assigned to project %s in day %s'%(i,tasknum,day)
+    print person
 
 # 返回技能匹配的数量,匹配规则:当集合相同位置的技能的值相近(差的绝对值小于等于1),就存在一个技能匹配
 # def MatchDegree1(person,task):
@@ -173,10 +173,14 @@ def giveTaskToMember(network,task,team):
 
     for i in range(10):
         numfit = 0
-        if task[1]['principals'][i][0] == -1 and memberWaiting(network,team)> numfit and fit(team,network,i) != 'notfound':
-            numfit +=1
-            task[1]['principals'][i][0] = fit(team,network,i)
-            network.node[fit(team,network,i)]['status'] = 'working'
+        if task[1]['principals'][i][0] == -1 and memberWaiting(network,team)> numfit:
+            theFit = fit(team,network,i)
+            if theFit != 'notfound':
+                numfit +=1
+                task[1]['principals'][i][0] = theFit
+                network.node[theFit]['status'] = 'working'
+                print '项目 %s 中,给 个体 %s : %s 分派了任务'%(task[0],theFit,network.node[theFit])
+
 
     taskUnfinish = taskUnfinished(task)
     if len(team['member'])>= 10 and isAllAssigned(task):
@@ -185,6 +189,7 @@ def giveTaskToMember(network,task,team):
            if network.node[j]['status'] == 'occupied':
                task[1]['principals'][randomNum].append(j)
                network.node[j]['status'] = 'working'
+               print '项目 %s 中,给 个体 %s : %s 分派了任务'%(task[0],j,network.node[j])
     return task
 # 返回未完成子项目列表
 def taskUnfinished(task):
@@ -316,12 +321,12 @@ def do():
         # 对每个个体设定开始时间和结束时间
         G.node[i]['start'] = 0
         G.node[i]['end'] = 0
-    print '============================these are developers==============================='
-    for node in G.node:
-        print node
-        print G.node[node]
-    print '============================these are developers==============================='
-    print
+    # print '============================these are developers==============================='
+    # for node in G.node:
+    #     print node
+    #     print G.node[node]
+    # print '============================these are developers==============================='
+    # print
 
 
     #=======================================================================
