@@ -532,3 +532,4 @@ if __name__=='__main__':
             # numdo为反复实验的次数
             numdo = expriment(conf.items('Expriment'))
             print('expriment has run %s times in all'%(numdo))
+
