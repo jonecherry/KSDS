@@ -16,33 +16,33 @@ switchbutton = int(conf1.items('Expriment')[2][1])
 
 def CreateGraph(data):
 
-    type=data[0][1]
-    n=int(data[1][1])
-    p=float(data[2][1])
+
+    n=NodeNum
+    # p=float(data[2][1])
     if data[3][1]=='None':
         seed=data[3][1]
     else:
         seed=int(data[3][1])
-    k=int(data[4][1])
-    m=int(data[5][1])
+    # k=int(data[4][1])
+    # m=int(data[5][1])
 
     if type=='er':
-        G=nx.random_graphs.erdos_renyi_graph(n, 0.2, seed)
+        G=nx.random_graphs.erdos_renyi_graph(n, p, seed)
 
     elif type=='ws':
-        G=nx.random_graphs.watts_strogatz_graph(n, 6, 0.5, seed)
+        G=nx.random_graphs.watts_strogatz_graph(n, m_ws, 0.5, seed)
 
     elif type=='ba':
-        G=nx.random_graphs.barabasi_albert_graph(n, 2, seed)
+        G=nx.random_graphs.barabasi_albert_graph(n, m_ba, seed)
 
     elif type=='regular':
-        G=nx.random_graphs.random_regular_graph(3, n, seed)
+        G=nx.random_graphs.random_regular_graph(m_re, n, seed)
 
     return G
 
 def GenSkillForPerson():
     personsSkillList = []
-    for person in range(int(conf.items('Person')[0][1])):
+    for person in range(PersonNum):
         personSkill = []
         distributionRange = range(0,11,1)
         a=random.SystemRandom()
@@ -62,7 +62,7 @@ def GenSkillForProject():
     projectSkillDemandList = []
     numList = range(0,11,1)
     a=random.SystemRandom()
-    for project in range(int(conf.items('Task')[0][1])):
+    for project in range(ProjectNum):
         projectSkill = []
         for i in range(10):
             randomNum = a.sample(numList,1)[0]
@@ -127,7 +127,7 @@ def AssignTask(task,network):
 # 返回一个匹配度大于1的个体
 def Match(network,task):
 
-    for i in range(int(conf.items('Person')[0][1])):
+    for i in range(PersonNum):
         if network.node[i]['status'] == 'available' and MatchDegree2(network.node[i],task)>=1:
             return i
     return 'notfound'
@@ -287,9 +287,9 @@ def do():
         print
     for i in range(len(degrees)):
         temp += i*degrees[i]
-    everageDegree = float(temp/float(conf.items('Graph')[1][1]))
+    everageDegree = float(temp/float(NodeNum))
     print '======================================================='
-    print '现在处于 %s 网络 ,有 %s 个节点,网络平均度为 %s'%(conf.items('Graph')[0][1],conf.items('Graph')[1][1],everageDegree)
+    print '现在处于 %s 网络 ,有 %s 个节点,网络平均度为 %s'%(conf.items('Graph')[0][1],NodeNum,everageDegree)
     print '======================================================='
 
     # 绘制网络结构图
@@ -352,18 +352,19 @@ def do():
 
     while 1:
 
-        day +=1
+
         # if day > 100:
         #     break
-
         completionNum = completion(ProjectsList)
-        taskNum = conf.items('Task')[0][1]
-        personNum = conf.items('Person')[0][1]
-        rate = completionNum/float(taskNum)*100
-        print '============================================================='
-        print 'day%s      %s个人     %s个项目完成了%s个,完成百分之%s            '%(day,personNum,taskNum,completionNum,rate)
-        print '============================================================='
 
+        rate = completionNum/float(ProjectNum)*100
+        print '============================================================='
+        print 'day%s      %s个人     %s个项目完成了%s个,完成百分之%s            '%(day,PersonNum,ProjectNum,completionNum,rate)
+        print '============================================================='
+        rateline = '%s,%s,%s,%s,%s,%s,%s'%(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())),conf.items('Graph')[0][1],ProjectNum,PersonNum,everageDegree,day,rate)
+        ratefile = open('rate_0325.csv','a')
+        ratefile.write(rateline+'\n')
+        day +=1
         #==========================团队组建=======================
         for num,project in enumerate(ProjectsList):
             if project[1]['status'] == 'undone':
@@ -426,7 +427,6 @@ def do():
                 #     for nb in G.neighbors(m):
                 #         print '%s,%s'%(nb,G.node[nb])
             print
-
             print '++++++++++++++++++++++rmLIST:'
             for r in rmlist:
                 print r
@@ -455,15 +455,15 @@ def do():
 #       #计算平均时间成本和资金成本
         if len(TeamList)==0:
             completionNum = completion(ProjectsList)
-            taskNum = conf.items('Task')[0][1]
-            personNum = conf.items('Person')[0][1]
-            rate = completionNum/float(taskNum)*100
+            rate = completionNum/float(ProjectNum)*100
             print '============================================================='
-            print '现在处于 %s 网络 ,有 %s 个节点,网络平均度为 %s'%(conf.items('Graph')[0][1],conf.items('Graph')[1][1],everageDegree)
+            print '现在处于 %s 网络 ,有 %s 个节点,网络平均度为 %s'%(conf.items('Graph')[0][1],NodeNum,everageDegree)
 
-            print 'day%s      %s个人     %s个项目完成了%s个,完成百分之%s            '%(day,personNum,taskNum,completionNum,rate)
+            print 'day%s      %s个人     %s个项目完成了%s个,完成百分之%s            '%(day,PersonNum,ProjectNum,completionNum,rate)
             print '========== end the simulation and show the results ==========='
-
+            rateline = '%s,%s,%s,%s,%s,%s,%s'%(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())),conf.items('Graph')[0][1],ProjectNum,PersonNum,everageDegree,day,rate)
+            # ratefile = open('ws_rate_0325.csv','a')
+            ratefile.write(rateline+'\n')
             total_time=0
             total_money=0
             for i in ProjectsList:
@@ -477,10 +477,11 @@ def do():
                 print '%s of %s tasks is done,the rest of tasks cannot find a match.'%(count,len(ProjectsList))
                 print 'it takes %s days and %s rmb in totol'%(day,total_money)
                 print 'it takes %s days and %s rmb in average'%(float(total_time)/float(count),total_money/float(count))
-            csvfile=open('distribution.csv','a')
-            line='%s,%s,%s,%s,%s,%s,%s,%s'%(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())),len(G.node),len(ProjectsList),count,day,total_money,float(total_time)/float(count),total_money/float(count))
+            csvfile=open('ever_0325.csv','a')
+            line='%s,%s,%s,%s,%s,%s,%s,%s,%s'%(type,time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())),len(G.node),everageDegree,len(ProjectsList),day,total_money,float(total_time)/float(count),total_money/float(count))
             csvfile.write(line+'\n')
             csvfile.close()
+            ratefile.close()
             break
 
 def expriment(data):
@@ -498,6 +499,36 @@ def expriment(data):
 if __name__=='__main__':
     conf = ConfigParser.ConfigParser()
     conf.read('conf.cfg')
-    # numdo为反复实验的次数
-    numdo = expriment(conf.items('Expriment'))
-    print('expriment has run %s times in all'%(numdo))
+    PersonNum = int(conf.items('Person')[0][1])
+    ProjectNum = int(conf.items('Task')[0][1])
+    p = 0.006
+    m_ws = 6
+    m_ba = 3
+    m_re = 6
+
+    typeList = ['er','ws','ba','regular']
+    for type in typeList:
+        # 考察网络结构对于完成率的影响
+        # NodeNum = PersonNum
+        # numdo = expriment(conf.items('Expriment'))
+        # print('expriment has run %s times in all'%(numdo))
+
+        #考察节点数的影响
+        # for i in range(10):
+        #     PersonNum += 50
+        #     NodeNum = PersonNum
+        #     # numdo为反复实验的次数
+        #     numdo = expriment(conf.items('Expriment'))
+        #     print('expriment has run %s times in all'%(numdo))
+
+
+        #  考察平均度的影响
+        for j in range(1):
+            p += 0.005
+            m_ws += 5
+            m_ba += 3
+            m_re += 5
+            NodeNum = PersonNum
+            # numdo为反复实验的次数
+            numdo = expriment(conf.items('Expriment'))
+            print('expriment has run %s times in all'%(numdo))
