@@ -361,8 +361,8 @@ def do():
         print '============================================================='
         print 'day%s      %s个人     %s个项目完成了%s个,完成百分之%s            '%(day,PersonNum,ProjectNum,completionNum,rate)
         print '============================================================='
-        rateline = '%s,%s,%s,%s,%s,%s,%s'%(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())),conf.items('Graph')[0][1],ProjectNum,PersonNum,everageDegree,day,rate)
-        ratefile = open('../results/rate_0325.csv','a')
+        rateline = '%s,%s,%s,%s,%s,%s,%s'%(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())),type,ProjectNum,PersonNum,everageDegree,day,rate)
+        ratefile = open('../results/rate_0326_01.csv','a')
         ratefile.write(rateline+'\n')
         day +=1
         #==========================团队组建=======================
@@ -461,7 +461,7 @@ def do():
 
             print 'day%s      %s个人     %s个项目完成了%s个,完成百分之%s            '%(day,PersonNum,ProjectNum,completionNum,rate)
             print '========== end the simulation and show the results ==========='
-            rateline = '%s,%s,%s,%s,%s,%s,%s'%(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())),conf.items('Graph')[0][1],ProjectNum,PersonNum,everageDegree,day,rate)
+            rateline = '%s,%s,%s,%s,%s,%s,%s'%(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())),type,ProjectNum,PersonNum,everageDegree,day,rate)
             # ratefile = open('ws_rate_0325.csv','a')
             ratefile.write(rateline+'\n')
             total_time=0
@@ -477,7 +477,10 @@ def do():
                 print '%s of %s tasks is done,the rest of tasks cannot find a match.'%(count,len(ProjectsList))
                 print 'it takes %s days and %s rmb in totol'%(day,total_money)
                 print 'it takes %s days and %s rmb in average'%(float(total_time)/float(count),total_money/float(count))
+
             csvfile=open('../results/node_num_0327.csv','a')
+
+
             line='%s,%s,%s,%s,%s,%s,%s,%s,%s'%(type,time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())),len(G.node),everageDegree,len(ProjectsList),day,total_money,float(total_time)/float(count),total_money/float(count))
             csvfile.write(line+'\n')
             csvfile.close()
@@ -517,8 +520,6 @@ if __name__=='__main__':
         # print('expriment has run %s times in all'%(numdo))
 
         #考察节点数的影响
-
-
         m_ws = 16
         m_ba = 8
         m_re = 16
