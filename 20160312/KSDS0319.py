@@ -477,7 +477,7 @@ def do():
                 print '%s of %s tasks is done,the rest of tasks cannot find a match.'%(count,len(ProjectsList))
                 print 'it takes %s days and %s rmb in totol'%(day,total_money)
                 print 'it takes %s days and %s rmb in average'%(float(total_time)/float(count),total_money/float(count))
-            csvfile=open('../results/node_num_0326.csv','a')
+            csvfile=open('../results/node_num_0327.csv','a')
             line='%s,%s,%s,%s,%s,%s,%s,%s,%s'%(type,time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())),len(G.node),everageDegree,len(ProjectsList),day,total_money,float(total_time)/float(count),total_money/float(count))
             csvfile.write(line+'\n')
             csvfile.close()
@@ -502,7 +502,7 @@ if __name__=='__main__':
 
 
     typeList = ['er','ws','ba','regular']
-    # typeList = ['regular']
+    # typeList = ['er']
     for type in typeList:
         PersonNum = int(conf.items('Person')[0][1])
         ProjectNum = int(conf.items('Task')[0][1])
@@ -517,12 +517,14 @@ if __name__=='__main__':
         # print('expriment has run %s times in all'%(numdo))
 
         #考察节点数的影响
-        p = 0.016
+
+
         m_ws = 16
         m_ba = 8
         m_re = 16
         for i in range(50):
             PersonNum += 20
+            p = round(16,5)/round(PersonNum,5)
             NodeNum = PersonNum
             # numdo为反复实验的次数
             numdo = expriment(conf.items('Expriment'))
