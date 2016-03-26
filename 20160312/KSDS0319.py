@@ -362,7 +362,7 @@ def do():
         print 'day%s      %s个人     %s个项目完成了%s个,完成百分之%s            '%(day,PersonNum,ProjectNum,completionNum,rate)
         print '============================================================='
         rateline = '%s,%s,%s,%s,%s,%s,%s'%(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())),conf.items('Graph')[0][1],ProjectNum,PersonNum,everageDegree,day,rate)
-        ratefile = open('rate_0325.csv','a')
+        ratefile = open('../results/rate_0325.csv','a')
         ratefile.write(rateline+'\n')
         day +=1
         #==========================团队组建=======================
@@ -477,7 +477,7 @@ def do():
                 print '%s of %s tasks is done,the rest of tasks cannot find a match.'%(count,len(ProjectsList))
                 print 'it takes %s days and %s rmb in totol'%(day,total_money)
                 print 'it takes %s days and %s rmb in average'%(float(total_time)/float(count),total_money/float(count))
-            csvfile=open('ever_0325.csv','a')
+            csvfile=open('../results/node_num_0326.csv','a')
             line='%s,%s,%s,%s,%s,%s,%s,%s,%s'%(type,time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())),len(G.node),everageDegree,len(ProjectsList),day,total_money,float(total_time)/float(count),total_money/float(count))
             csvfile.write(line+'\n')
             csvfile.close()
@@ -499,37 +499,44 @@ def expriment(data):
 if __name__=='__main__':
     conf = ConfigParser.ConfigParser()
     conf.read('conf.cfg')
-    PersonNum = int(conf.items('Person')[0][1])
-    ProjectNum = int(conf.items('Task')[0][1])
-    p = 0.006
-    m_ws = 6
-    m_ba = 3
-    m_re = 6
+
 
     typeList = ['er','ws','ba','regular']
+    # typeList = ['regular']
     for type in typeList:
+        PersonNum = int(conf.items('Person')[0][1])
+        ProjectNum = int(conf.items('Task')[0][1])
+        p = 0.004
+        m_ws = 4
+        m_ba = 2
+        m_re = 4
+
         # 考察网络结构对于完成率的影响
         # NodeNum = PersonNum
         # numdo = expriment(conf.items('Expriment'))
         # print('expriment has run %s times in all'%(numdo))
 
         #考察节点数的影响
-        # for i in range(10):
-        #     PersonNum += 50
-        #     NodeNum = PersonNum
-        #     # numdo为反复实验的次数
-        #     numdo = expriment(conf.items('Expriment'))
-        #     print('expriment has run %s times in all'%(numdo))
-
-
-        #  考察平均度的影响
-        for j in range(1):
-            p += 0.005
-            m_ws += 5
-            m_ba += 3
-            m_re += 5
+        p = 0.016
+        m_ws = 16
+        m_ba = 8
+        m_re = 16
+        for i in range(50):
+            PersonNum += 20
             NodeNum = PersonNum
             # numdo为反复实验的次数
             numdo = expriment(conf.items('Expriment'))
             print('expriment has run %s times in all'%(numdo))
+
+
+        #  考察平均度的影响
+        # for j in range(50):
+        #     p += 0.002
+        #     m_ws += 2
+        #     m_ba += 1
+        #     m_re += 2
+        #     NodeNum = PersonNum
+        #     # numdo为反复实验的次数
+        #     numdo = expriment(conf.items('Expriment'))
+        #     print('expriment has run %s times in all'%(numdo))
 
