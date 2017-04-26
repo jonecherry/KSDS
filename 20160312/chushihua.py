@@ -32,15 +32,18 @@ def init_person(G,PersonSkill):
         # 个体的分享意愿
         G.node[i]['share'] = random.SystemRandom().sample([0,1],1)[0]
         # 个体的作业效率
-        G.node[i]['rate'] = random.SystemRandom().sample(range(1,11,1),1)[0]
+        # G.node[i]['rate'] = random.SystemRandom().sample(range(1,11,1),1)[0]
+        G.node[i]['rate'] = 5
     return G
+
 
 #项目的状态有：undone,processing,done
 def init_project(ProjectsSkill):
     ProjectsList = []
     for j,skill in enumerate(ProjectsSkill):
         #随机生成每个项目的工作量，区间是100-1000
-        workload = random.SystemRandom().sample(range(50,100,1),1)[0]
-        temp=[j,{'skill':skill,'workload':workload,'time':0,'status':'undone','start':0,'end':0}]
+        workload = random.SystemRandom().sample(range(500,1000,1),1)[0]
+        assign_limit = workload/100
+        temp=[j,{'skill':skill,'workload':workload,'time':0,'status':'undone','start':0,'end':0,'assign_limit':assign_limit}]
         ProjectsList.append(temp)
     return ProjectsList

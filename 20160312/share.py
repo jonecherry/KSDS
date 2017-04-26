@@ -49,7 +49,7 @@ def ToBusy(i,person,tasknum):
         print '%s is assigned to project %s in day %s'%(i,tasknum,day)
 
 
-# 返回技能匹配的数量,匹配规则:当人的技能值大于等于项目的技能值,就存在一个技能匹配
+# 返回技能匹配的数量,匹配规则:当个体的技能和对应位置上项目的需求都为1,增加一个知识匹配度
 def MatchDegree(person,task):
     j = 0
     for i in range(10):
@@ -59,37 +59,53 @@ def MatchDegree(person,task):
 
 # 个体选择加入收益最大化的团队
 def max_payoff(node,network):
-    payoff = 0
-    xiangmuid = -1
+    if len(network.neighbors(node))==0:
+        return True
+    payofflist = []
+    lixiangteam = -1
+    global lixiang
+    group = []
+    projects = []
+    projectid = -1
     for jieidan in network.neighbors(node):
-        if network.node[jieidan]['status']!='available':
-            projectid =  network.node[jieidan]['project'][-1]
-            shouyi_per = 0
-            for team in TeamList:
-                if team['task']== projectid:
-                    shouyi = 0
-                    group = team['members']
-                    for member in group:
-                        if network.node[member]['share'] ==1 and network.node[node]['share']==1:
-                            shouyi = shouyi + sum(network.node[member]['skill'])
-                        if network.node[member]['share'] ==1 and network.node[node]['share']==0:
-                            shouyi = shouyi + sum(network.node[member]['skill'])+1
-                        if network.node[member]['share'] ==0 and network.node[node]['share']==0:
-                            pass
-                        if network.node[member]['share'] ==0 and network.node[node]['share']==1:
-                            shouyi = shouyi - 1
-                    # 平均收益
-                    shouyi_per = shouyi / len(group)
+        if network.node[jieidan]['status']=='occupied' and network.node[jieidan]['project'][-1] not in projects:
+            projects.append(network.node[jieidan]['project'][-1])
+    if switchbutton==1:
+        print '节点 %d 周围有 %s 个团队 %s'%(node,len(projects),projects)
+    if not projects:
+        return True
+    for project in projects:
+        team = searchTeam(project)
+        group = team['members']
+        # avg_shouyi = 0
+        shouyi = 0
+        for member in group:
+            if network.node[member]['share'] ==1 and network.node[node]['share']==1:
+                shouyi = shouyi + sum(network.node[member]['skill'])
+            if network.node[member]['share'] ==1 and network.node[node]['share']==0:
+                shouyi = shouyi + sum(network.node[member]['skill'])+1
+            if network.node[member]['share'] ==0 and network.node[node]['share']==0:
+                pass
+            if network.node[member]['share'] ==0 and network.node[node]['share']==1:
+                shouyi = shouyi - 1
+        # avg_shouyi = shouyi/len(group)
 
-            if shouyi_per > payoff:
-                payoff = shouyi_per
-                xiangmuid = projectid
+        payofflist.append({'team':project,'shouyi':shouyi})
+    if switchbutton==1:
+        print '团队 收益'
+        print payofflist
+    max = 0
+    for payoff in payofflist:
+        if payoff['shouyi']>max:
+            max = payoff
+            lixiangteam = payoff['team']
+    if switchbutton==1:
+        print '选择团队'+str(lixiangteam)
+    return lixiangteam
 
-    return xiangmuid
 
 
-
-# 团队组建初期，返回Team
+# 团队组建初期
 def AssignTask(task,network):
     Team={'members':[]}
 
@@ -97,19 +113,22 @@ def AssignTask(task,network):
     if Match(network,task) != 'notfound':
         theFirst = Match(network,task)
         ToBusy(theFirst,network.node[theFirst],task[0])
-
         task[1]['status']='processing'
         Team['members'].append(theFirst)
         Team['task'] = task[0]
+        TeamList.append(Team)
 
+        team = searchTeam(Team['task'])
         # 从邻域中找匹配度大于等于1，并且符合个体收益最大化的个体加入team
         for node in network.neighbors(theFirst):
-            if network.node[node]['status']=='available' and MatchDegree(network.node[node],task) and task[0] == max_payoff(node,network):
-                ToBusy(node,network.node[node],task[0])
-                Team['members'].append(node)
-
-        TeamList.append(Team)
-        return Team
+            if network.node[node]['status']=='available' and MatchDegree(network.node[node],task):
+                if max_payoff(node,network) or max_payoff(node,network)==task[0]:
+                    ToBusy(node, network.node[node], task[0])
+                    team['members'].append(node)
+                else:
+                    continue
+        update_team_list(team)
+        return
     else:
         return 'waiting'
 # 返回一个匹配度大于1的个体
@@ -119,19 +138,20 @@ def Match(network,task):
             return i
     return 'notfound'
 
-
 # 项目执行过程中，继续找匹配度大于等于1的个体
 def addMember(task,network):
-
     team = searchTeam(task[0])
     for m in team['members']:
         for node in network.neighbors(m):
-            if network.node[node]['status']=='available'and MatchDegree(network.node[node],task) and task[0] == max_payoff(node,network):
-                ToBusy(node,network.node[node],task[0])
-                team['members'].append(node)
-                update_team_list(team)
-                return
-
+            if network.node[node]['status']=='available'and MatchDegree(network.node[node],task):
+                if max_payoff(node,network) or task[0] == max_payoff(node,network):
+                    ToBusy(node,network.node[node],task[0])
+                    team['members'].append(node)
+                    update_team_list(team)
+                    return
+                else:
+                    continue
+    return TeamList
 #更新团队信息
 def update_team_list(team):
     for li in TeamList:
@@ -253,6 +273,10 @@ def process():
     #初始化群集
     G = chushihua.init_person(G,PersonSkill)
 
+    if switchbutton == 1:
+        print G.node
+        print ProjectsList
+
     count=0
     global day
     day = 0
@@ -299,17 +323,29 @@ def process():
             count+=1
             TeamList.remove(dtsk)
             tms=dtsk['members']
+
+
+            if len(tms)<=3:
+                print '%s团队成员数量小于4'%dtsk['task'],'邻近节点理想团队：'
+                for ttmm in tms:
+                    for tttmmm in G.neighbors(ttmm):
+                        try:
+                            print tttmmm,'理想团队'+str(max_payoff(tttmmm,G))
+                        except:
+                            pass
             for tm in tms:
                 G.node[tm]['end'] = day
                 G.node[tm]['status'] = 'available'
             ProjectsList[dtsk['task']][1]['end']=day
             ProjectsList[dtsk['task']][1]['time']=ProjectsList[dtsk['task']][1]['end']-ProjectsList[dtsk['task']][1]['start']
             ProjectsList[dtsk['task']][1]['status']='done'
-            print 'task %s is done!!!'%(dtsk['task'])
+            print 'task %s is done!!! %s'%(dtsk['task'],ProjectsList[dtsk['task']])
+            if switchbutton ==1:
+                print 'members:%s'%tms
+                for mi in tms:
+                    print G.node[mi]
             print 'it costs %s people %s days'%(len(tms),ProjectsList[dtsk['task']][1]['time'])
-            if switchbutton == 1:
-                print  ProjectsList[dtsk['task']]
-            print
+
         #结算平均成本
         if len(TeamList)==0:
             completionNum = completion(ProjectsList)
@@ -325,7 +361,7 @@ def process():
             for i in ProjectsList:
                 total_time+=i[1]['time']
             if count==len(ProjectsList):
-                print 'all tasks are done!!!!! '
+                print 'all projects are done!!!!! '
                 print 'it takes %s days in average'%(float(total_time)/float(count))
             else:
                 print '%s of %s tasks is done,the rest of tasks cannot find a match.'%(count,len(ProjectsList))
@@ -357,6 +393,7 @@ if __name__=='__main__':
     csvfile = open(records, 'a')
 
     typeList = ['er','ws','ba','regular']
+    typeList = ['ba','regular']
     for type in typeList:
         PersonNum = int(conf.items('Person')[0][1])
         ProjectNum = int(conf.items('Task')[0][1])
@@ -393,6 +430,9 @@ if __name__=='__main__':
         #     # numdo为反复实验的次数
         #     numdo = expriment(conf.items('Expriment'))
         #     print('expriment has run %s times in all'%(numdo))
-        # csvfile.close()
-        # ratefile.close()
+
+
+
+    csvfile.close()
+    ratefile.close()
 
